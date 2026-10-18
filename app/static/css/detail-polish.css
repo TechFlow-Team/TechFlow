@@ -2,3 +2,13 @@
 @media(max-width:1199.98px){.detail-steps{gap:12px}.detail-step{gap:9px}.detail-step:not(:last-child)::after{display:none}}
 @media(max-width:767.98px){.detail-progress,.detail-actions{padding:18px}.detail-steps{display:grid;grid-template-columns:1fr 1fr;gap:20px 14px}.detail-step-icon{width:32px;height:32px}.detail-section-heading{padding:18px 18px 10px;flex-wrap:wrap}.detail-totals{padding:18px;justify-content:space-between;gap:18px}.detail-totals [data-document-total]{font-size:1.25rem}.detail-totals>div{min-width:0}.detail-action-buttons{width:100%}.detail-action-buttons .btn{flex:1 1 180px}.detail-actions{gap:16px}.detail-actions>div:first-child{flex-basis:100%}.wr-information-heading{flex-wrap:wrap}}
 .detail-document-code{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px}.detail-document-code h1{margin:0;min-width:0;overflow-wrap:anywhere}.detail-document-code .btn{flex-shrink:0;min-height:40px}.catalog-heading .detail-copy-feedback{font-size:.8rem;color:#63718c;margin:6px 0 0;max-width:650px}.detail-copy-feedback:empty{display:none}
+/* Buyer-UI upgrade (FOUNDATION): storefront product gallery */
+.product-gallery{display:flex;flex-direction:column;gap:12px;width:100%}
+.product-gallery__main{overflow:hidden;border-radius:12px;border:1px solid var(--border,#e2e8f0);background:#eef2fb}
+.product-gallery__main img{width:100%;display:block;transition:transform .35s ease}
+.product-gallery__main:hover img{transform:scale(1.12)}
+.product-gallery__thumbs{display:flex;gap:10px;flex-wrap:wrap}
+.product-gallery__thumb{padding:0;width:66px;height:66px;flex:0 0 auto;overflow:hidden;border-radius:9px;border:1px solid var(--border,#e2e8f0);background:#fff;cursor:pointer;transition:border-color .2s ease,box-shadow .2s ease}
+.product-gallery__thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.product-gallery__thumb:hover{border-color:var(--blue,#1b3a8f)}
+.product-gallery__thumb.is-active{border-color:var(--blue,#1b3a8f);box-shadow:0 0 0 2px color-mix(in srgb,var(--blue,#1b3a8f) 28%,transparent)}

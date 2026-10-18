@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Thiết bị ngoại vi">
+  <rect width="400" height="300" fill="#f4f7ff"/>
+  <rect x="8" y="8" width="384" height="284" rx="16" fill="none" stroke="#d8e2f6" stroke-width="2"/>
+  <g stroke="#1b3a8f" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M200 92c-26 0-44 20-44 52 0 30 14 52 44 52s44-22 44-52c0-32-18-52-44-52z" fill="#eaf0fd"/>
+    <line x1="200" y1="92" x2="200" y2="150" stroke="#111b34"/>
+  </g>
+  <text x="200" y="266" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="20" font-weight="600" fill="#111b34">Thiết bị ngoại vi</text>
+</svg>

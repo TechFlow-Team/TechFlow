@@ -1,2 +1,43 @@
 {% extends 'shop/base.html' %}
-{% block content %}<section class="panel"><h1>Sản phẩm yêu thích</h1><p>Danh sách được lưu theo tài khoản; khách vãng lai cần đăng nhập để lưu.</p><div class="row g-3">{% for entry in results.items %}{% set p=entry.product %}<article class="col-md-6"><div class="border rounded p-3"><h2 class="h5">{% if p.is_active %}<a href="{{ url_for('shop.product_detail', product_id=p.id) }}">{{ p.name }}</a>{% else %}{{ p.name }}{% endif %}</h2><p>{{ p.sku }} · {{ p.selling_price|vnd }} · {{ 'Ngừng bán' if not p.is_active else 'Còn hàng' if p.stock_quantity else 'Hết hàng' }}</p><div class="d-flex gap-2"><form method="post" action="{{ url_for('engagement.favorite_toggle', product_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger">Bỏ yêu thích</button></form><form method="post" action="{{ url_for('engagement.compare_toggle', product_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-primary">Chọn/bỏ so sánh</button></form></div></div></article>{% else %}<p>Chưa có sản phẩm yêu thích.</p>{% endfor %}</div>{% for n in results.iter_pages() %}{% if n %}<a class="btn btn-light" href="{{ url_for('engagement.favorites', page=n) }}">{{ n }}</a>{% endif %}{% endfor %}</section>{% endblock %}
+{% block title %}Sản phẩm yêu thích · TechFlow{% endblock %}
+{% block body_class %}favorites-page{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/shop-detail.css') }}">{% endblock %}
+{% block content %}
+<div class="account-layout">
+  {% include 'shop/_account_sidebar.html' %}
+  <div class="account-content">
+    <section class="panel">
+      <h1>Sản phẩm yêu thích</h1>
+      {% if results.items %}
+      <div class="store-grid">
+        {% for entry in results.items %}{% set p = entry.product %}
+        <article class="store-card">
+          <a class="store-card-media" href="{{ url_for('shop.product_detail', product_id=p.id) }}" aria-label="Xem {{ p.name }}"><img src="{{ product_image_src(p) }}" alt="{{ p.name }}" loading="lazy" decoding="async"></a>
+          <button type="button" class="favorite-heart is-active" data-favorite-id="{{ p.id }}" aria-pressed="true" aria-label="Bỏ yêu thích {{ p.name }}"><i class="bi bi-heart-fill" aria-hidden="true"></i></button>
+          <div class="store-card-body">
+            <p class="store-eyebrow mb-2">{{ p.category.name }}</p>
+            <h2><a href="{{ url_for('shop.product_detail', product_id=p.id) }}">{{ p.name }}</a></h2>
+            <p class="store-muted">{{ p.sku }}</p>
+            <p class="store-price">{{ p.selling_price|vnd }}</p>
+            <p class="store-stock">{{ 'Ngừng bán' if not p.is_active else ('Còn ' ~ p.stock_quantity ~ ' sản phẩm' if p.stock_quantity else 'Hết hàng') }}</p>
+            <div class="store-card-actions">
+              <a class="btn btn-outline-primary" href="{{ url_for('shop.product_detail', product_id=p.id) }}">Chi tiết</a>
+              {% if p.is_active %}<form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="quantity" value="1"><button class="btn btn-primary" {% if not p.stock_quantity %}disabled{% endif %}>Thêm giỏ</button></form>{% endif %}
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <nav class="store-pagination" aria-label="Phân trang">{% for n in results.iter_pages() %}{% if n %}<a href="{{ url_for('engagement.favorites', page=n) }}">{{ n }}</a>{% endif %}{% endfor %}</nav>
+      {% else %}
+      <div class="store-empty favorites-empty">
+        <i class="bi bi-heart fs-1" aria-hidden="true"></i>
+        <h2>Chưa có sản phẩm yêu thích</h2>
+        <p>Nhấn vào biểu tượng trái tim trên sản phẩm để lưu lại cho lần sau.</p>
+        <a class="btn btn-primary" href="{{ url_for('shop.index') }}">Khám phá sản phẩm</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

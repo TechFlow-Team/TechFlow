@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Phụ kiện">
+  <rect width="400" height="300" fill="#f4f7ff"/>
+  <rect x="8" y="8" width="384" height="284" rx="16" fill="none" stroke="#d8e2f6" stroke-width="2"/>
+  <g stroke="#1b3a8f" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M150 128h100l-14 84a12 12 0 0 1-12 10h-48a12 12 0 0 1-12-10z" fill="#eaf0fd"/>
+    <path d="M172 128v-12a28 28 0 0 1 56 0v12" stroke="#111b34"/>
+  </g>
+  <text x="200" y="268" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="600" fill="#111b34">Phụ kiện</text>
+</svg>

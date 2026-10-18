@@ -1,10 +1,15 @@
 {% extends 'shop/base.html' %}
 {% block title %}Tài khoản của tôi · TechFlow{% endblock %}
 {% block content %}
+<div class="account-layout">
+  {% include 'shop/_account_sidebar.html' %}
+  <div class="account-content">
 <section class="panel"><span class="store-eyebrow">TÀI KHOẢN KHÁCH HÀNG</span><h1>Hồ sơ và địa chỉ giao hàng</h1>
 {% if message %}<div class="alert alert-danger" role="alert">{{ message }}</div>{% endif %}
 <form method="post" novalidate>{{ form.hidden_tag() }}
   {% for field in [form.full_name, form.email, form.phone, form.address] %}<div class="mb-3">{{ field.label(class="form-label") }}{{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}{% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>{% endfor %}
   <button class="btn btn-primary" type="submit">Lưu thay đổi</button> <a class="btn btn-light" href="{{ url_for('shop.orders') }}">Đơn hàng của tôi</a>
 </form></section>
+  </div>
+</div>
 {% endblock %}

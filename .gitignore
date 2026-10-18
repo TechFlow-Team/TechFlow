@@ -29,3 +29,7 @@ instance/
 !/docs/screenshots/stage52-admin-desktop-intake.png
 !/docs/screenshots/stage52-admin-mobile-returned.png
 /docs/screenshots/prestage7-*.png
+
+# Postman local workspace (kept local, not part of the app repo)
+postman/
+.postman/

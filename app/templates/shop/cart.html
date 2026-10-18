@@ -1,11 +1,64 @@
 {% extends 'shop/base.html' %}
 {% block title %}Giỏ hàng · TechFlow{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/shop-detail.css') }}">{% endblock %}
 {% block content %}
-<section class="panel"><span class="eyebrow">CỬA HÀNG TECHFLOW</span><h1>Giỏ hàng</h1>
-{% if rows %}<form method="post" action="{{ url_for('shop.update_cart') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="table-responsive"><table class="table align-middle store-table"><thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Thành tiền</th><th></th></tr></thead><tbody>
-{% for product, quantity, subtotal in rows %}<tr><td><a href="{{ url_for('shop.product_detail', product_id=product.id) }}">{{ product.name }}</a></td><td><label class="visually-hidden" for="cart-{{ product.id }}">Số lượng {{ product.name }}</label><input class="form-control store-quantity" id="cart-{{ product.id }}" type="number" name="quantity_{{ product.id }}" min="0" max="20" value="{{ quantity }}"></td><td>{{ subtotal|vnd }}</td><td><button class="btn btn-link text-danger" type="submit" formaction="{{ url_for('shop.remove_from_cart', product_id=product.id) }}" formmethod="post" formnovalidate>Xóa</button></td></tr>{% endfor %}
-</tbody></table></div><button class="btn btn-outline-primary" type="submit">Cập nhật giỏ</button></form><p class="fs-5 fw-bold mt-3">Tạm tính: {{ total|vnd }}</p>
-{% if current_user.is_authenticated and current_user.role == 'client' %}<a class="btn btn-primary" href="{{ url_for('shop.checkout') }}">Tiếp tục đặt hàng</a>{% else %}<p>Đăng nhập tài khoản khách để tiếp tục đặt hàng.</p><a class="btn btn-primary" href="{{ url_for('auth.login', next=url_for('shop.checkout')) }}">Đăng nhập</a> <a href="{{ url_for('shop.register') }}">Tạo tài khoản</a>{% endif %}
-{% else %}<div class="store-empty"><i class="bi bi-bag fs-2" aria-hidden="true"></i><h2>Giỏ hàng đang trống</h2><a class="btn btn-primary" href="{{ url_for('shop.index') }}">Tiếp tục xem sản phẩm</a></div>{% endif %}
+<section class="panel">
+  <span class="store-eyebrow">CỬA HÀNG TECHFLOW</span>
+  <h1>Giỏ hàng</h1>
+  {% if rows %}
+  <div class="cart-layout">
+    <div class="cart-items" data-cart-items>
+      {% for product, quantity, line in rows %}
+      <div class="cart-row" data-cart-row="{{ product.id }}">
+        <a class="cart-row__media" href="{{ url_for('shop.product_detail', product_id=product.id) }}"><img src="{{ product_image_src(product) }}" alt="{{ product.name }}" loading="lazy"></a>
+        <div class="cart-row__info">
+          <a class="cart-row__name" href="{{ url_for('shop.product_detail', product_id=product.id) }}">{{ product.name }}</a>
+          <p class="cart-row__sku">SKU: {{ product.sku }}</p>
+          <p class="cart-row__unit">Đơn giá: {{ product.selling_price|vnd }}</p>
+          <p class="cart-row__warn" data-cart-warn{% if not (product.stock_quantity and quantity >= product.stock_quantity) %} hidden{% endif %}>{% if product.stock_quantity and quantity >= product.stock_quantity %}Đã đạt tối đa tồn kho ({{ product.stock_quantity }}).{% endif %}</p>
+        </div>
+        <div class="cart-row__qty">
+          <div class="qty-stepper" data-qty>
+            <button type="button" class="qty-stepper__btn" data-qty-dec aria-label="Giảm số lượng">−</button>
+            <input class="qty-stepper__input" type="text" inputmode="numeric" value="{{ quantity }}" data-qty-input data-product-id="{{ product.id }}" data-stock="{{ product.stock_quantity }}" aria-label="Số lượng {{ product.name }}">
+            <button type="button" class="qty-stepper__btn" data-qty-inc aria-label="Tăng số lượng">+</button>
+          </div>
+        </div>
+        <div class="cart-row__total" data-cart-line>{{ line|vnd }}</div>
+        <button type="button" class="cart-row__remove" data-cart-remove="{{ product.id }}" aria-label="Xóa {{ product.name }} khỏi giỏ"><i class="bi bi-trash" aria-hidden="true"></i></button>
+      </div>
+      {% endfor %}
+    </div>
+    <aside class="cart-summary">
+      <h2 class="h5">Tóm tắt đơn hàng</h2>
+      <div class="cart-summary__row"><span>Tạm tính</span><span data-sum-subtotal>{{ summary.subtotal_display }}</span></div>
+      <div class="cart-summary__row"><span>Phí vận chuyển</span><span data-sum-shipping>{{ summary.shipping_display }}</span></div>
+      <div class="cart-summary__row cart-summary__discount" data-sum-discount-row{% if not summary.discount_percent %} hidden{% endif %}><span>Giảm giá <span data-sum-discount-code>{{ summary.discount_code or '' }}</span></span><span data-sum-discount>- {{ summary.discount_display }}</span></div>
+      <form class="cart-discount" data-discount-form>
+        <label class="form-label" for="discount-code">Mã giảm giá</label>
+        <div class="cart-discount__row">
+          <input class="form-control" id="discount-code" name="code" value="{{ summary.discount_code or '' }}" placeholder="VD: TECHFLOW10" maxlength="24">
+          <button class="btn btn-outline-primary" type="submit">Áp dụng</button>
+        </div>
+        <p class="cart-discount__msg" data-discount-msg aria-live="polite"></p>
+      </form>
+      <div class="cart-summary__total"><span>Tổng cộng</span><span data-sum-total>{{ summary.total_display }}</span></div>
+      {% if current_user.is_authenticated and current_user.role == 'client' %}
+      <a class="btn btn-primary w-100" href="{{ url_for('shop.checkout') }}">Tiến hành thanh toán</a>
+      {% else %}
+      <a class="btn btn-primary w-100" href="{{ url_for('auth.login', next='/checkout') }}">Đăng nhập để thanh toán</a>
+      <p class="small mt-2 mb-0">Chưa có tài khoản? <a href="{{ url_for('shop.register') }}">Tạo tài khoản</a></p>
+      {% endif %}
+      <a class="cart-summary__back" href="{{ url_for('shop.index') }}">← Tiếp tục mua sắm</a>
+    </aside>
+  </div>
+  {% else %}
+  <div class="store-empty cart-empty">
+    <i class="bi bi-cart-x fs-1" aria-hidden="true"></i>
+    <h2>Giỏ hàng đang trống</h2>
+    <p>Hãy khám phá sản phẩm và thêm vào giỏ để bắt đầu mua sắm.</p>
+    <a class="btn btn-primary" href="{{ url_for('shop.index') }}">Tiếp tục mua sắm</a>
+  </div>
+  {% endif %}
 </section>
 {% endblock %}

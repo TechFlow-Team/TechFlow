@@ -1,4 +1,6 @@
-from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
+import re
+
+from flask import Blueprint, abort, current_app, flash, jsonify, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user
 from sqlalchemy import or_, select, func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
@@ -6,7 +8,7 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.permissions import client_required
 from app.extensions import db
-from app.models import Category, Customer, Product, SalesOrder, SalesOrderItem, User, ProductReview
+from app.models import Category, Customer, Favorite, Product, SalesOrder, SalesOrderItem, SupportConversation, User, ProductReview
 from app.services.client_order_service import cancel_client_order, place_client_order
 from app.services.customer_service import normalize_registered_profile
 from app.services.inventory_service import InventoryError
@@ -36,9 +38,48 @@ def _cart_rows(cart):
     return rows, sum((row[2] for row in rows), start=0)
 
 
+# Mã giảm giá demo (giảm theo %). Chỉ áp dụng hiển thị ở giỏ; đơn hàng do backend tính lại.
+DISCOUNTS = {"TECHFLOW10": 10, "SINHVIEN5": 5}
+
+
+def _vnd(value):
+    try:
+        amount = int(round(float(value)))
+    except (TypeError, ValueError):
+        return "0 ₫"
+    return f"{amount:,}".replace(",", ".") + " ₫"
+
+
+def _cart_summary(cart):
+    _rows, subtotal = _cart_rows(cart)
+    code = session.get("discount") if session.get("discount") in DISCOUNTS else None
+    percent = DISCOUNTS.get(code, 0)
+    discount = (subtotal * percent) / 100
+    total = subtotal - discount
+    return {"count": sum(cart.values()), "items": len(cart),
+            "subtotal_display": _vnd(subtotal), "discount_percent": percent,
+            "discount_display": _vnd(discount), "shipping_display": "Miễn phí",
+            "total_display": _vnd(total), "discount_code": code}
+
+
 @blueprint.app_context_processor
 def storefront_context():
-    return {"cart_count": sum(_cart().values())}
+    compare_raw = session.get("compare", [])
+    compare_count = len(compare_raw) if isinstance(compare_raw, list) else 0
+    favorite_count = 0
+    support_unread = 0
+    if current_user.is_authenticated and getattr(current_user, "role", None) == "client":
+        favorite_count = db.session.scalar(select(func.count()).select_from(Favorite).where(Favorite.user_id == current_user.id)) or 0
+        # Chưa đọc = ticket chưa từng mở, hoặc có cập nhật mới hơn mốc "đã xem" lưu trong session.
+        seen = session.get("support_seen", {})
+        if not isinstance(seen, dict):
+            seen = {}
+        rows = db.session.execute(select(SupportConversation.id, SupportConversation.updated_at)
+                                  .where(SupportConversation.user_id == current_user.id)).all()
+        support_unread = sum(1 for cid, updated_at in rows
+                             if str(cid) not in seen or (updated_at and updated_at.isoformat() > seen[str(cid)]))
+    return {"cart_count": sum(_cart().values()), "compare_count": compare_count,
+            "favorite_count": favorite_count, "support_unread": support_unread}
 
 
 @blueprint.get("/shop")
@@ -46,7 +87,18 @@ def index():
     q = request.args.get("q", "").strip()
     category = request.args.get("category", "")
     sort = request.args.get("sort", "name")
+    brand = request.args.get("brand", "").strip()
+    price_min = request.args.get("price_min", "").strip()
+    price_max = request.args.get("price_max", "").strip()
     if len(q) > 120 or sort not in {"name", "price_asc", "price_desc", "newest"}:
+        abort(400)
+    if len(brand) > 100:
+        abort(400)
+    if price_min and not re.fullmatch(r"[0-9]{1,12}", price_min):
+        abort(400)
+    if price_max and not re.fullmatch(r"[0-9]{1,12}", price_max):
+        abort(400)
+    if price_min and price_max and int(price_min) > int(price_max):
         abort(400)
     query = select(Product).where(Product.is_active.is_(True))
     if q:
@@ -56,6 +108,12 @@ def index():
         if not category.isascii() or not category.isdigit() or len(category) > 19 or int(category) < 1:
             abort(400)
         query = query.where(Product.category_id == int(category))
+    if brand:
+        query = query.where(Product.brand == brand)
+    if price_min:
+        query = query.where(Product.selling_price >= int(price_min))
+    if price_max:
+        query = query.where(Product.selling_price <= int(price_max))
     order_by = {"name": Product.name.asc(), "price_asc": Product.selling_price.asc(),
                 "price_desc": Product.selling_price.desc(), "newest": Product.id.desc()}[sort]
     page = request.args.get("page", "1")
@@ -64,7 +122,9 @@ def index():
     results = db.paginate(query.order_by(order_by, Product.id), page=int(page), per_page=12, error_out=False)
     categories = db.session.scalars(select(Category).where(Category.is_active.is_(True),
         Category.products.any(Product.is_active.is_(True))).order_by(Category.name)).all()
-    return render_template("shop/index.html", results=results, categories=categories,
+    brands = db.session.scalars(select(Product.brand).where(Product.is_active.is_(True),
+        Product.brand.is_not(None), Product.brand != "").distinct().order_by(Product.brand)).all()
+    return render_template("shop/index.html", results=results, categories=categories, brands=brands,
                            cart_count=sum(_cart().values()), page_url=lambda n: url_for("shop.index", **{**request.args.to_dict(), "page": n}))
 
 
@@ -78,7 +138,22 @@ def product_detail(product_id):
     visible = (ProductReview.product_id == product_id, ProductReview.status == 'visible')
     reviews = db.session.scalars(select(ProductReview).where(*visible).order_by(ProductReview.id.desc()).limit(50)).all()
     summary = db.session.execute(select(func.count(), func.avg(ProductReview.rating)).where(*visible)).one()
-    return render_template("shop/product.html", product=product, reviews=reviews, review_summary=summary)
+    distribution = {star: 0 for star in range(1, 6)}
+    for star, total in db.session.execute(select(ProductReview.rating, func.count()).where(*visible).group_by(ProductReview.rating)):
+        distribution[int(star)] = total
+    can_review = False
+    my_review = None
+    if current_user.is_authenticated and getattr(current_user, "role", None) == "client":
+        my_review = db.session.scalar(select(ProductReview).where(
+            ProductReview.user_id == current_user.id, ProductReview.product_id == product_id))
+        can_review = db.session.scalar(select(SalesOrderItem.id).join(SalesOrder).where(
+            SalesOrderItem.product_id == product_id, SalesOrder.status == "completed",
+            (SalesOrder.created_by == current_user.id) | SalesOrder.customer.has(user_id=current_user.id)).limit(1)) is not None
+    related = db.session.scalars(select(Product).where(
+        Product.category_id == product.category_id, Product.id != product.id,
+        Product.is_active.is_(True)).order_by(Product.id.desc()).limit(4)).all()
+    return render_template("shop/product.html", product=product, reviews=reviews, review_summary=summary,
+                           review_distribution=distribution, can_review=can_review, my_review=my_review, related=related)
 
 
 @blueprint.post("/shop/cart/<int:product_id>")
@@ -113,9 +188,10 @@ def cart():
     rows, total = _cart_rows(cart_items)
     if len(rows) != len(cart_items):
         available = {str(product.id) for product, _, _ in rows}
-        session["cart"] = {key: qty for key, qty in cart_items.items() if key in available}
+        cart_items = {key: qty for key, qty in cart_items.items() if key in available}
+        session["cart"] = cart_items
         flash("Giỏ hàng đã được làm mới vì một số sản phẩm không còn được bán.", "info")
-    return render_template("shop/cart.html", rows=rows, total=total)
+    return render_template("shop/cart.html", rows=rows, total=total, summary=_cart_summary(cart_items))
 
 
 @blueprint.post("/cart/update")
@@ -152,7 +228,61 @@ def remove_from_cart(product_id):
     cart = _cart()
     cart.pop(str(product_id), None)
     session["cart"] = cart
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return jsonify(_cart_summary(cart))
     return redirect(url_for("shop.cart"), code=303)
+
+
+@blueprint.get("/cart/count")
+def cart_count():
+    return jsonify({"count": sum(_cart().values())})
+
+
+@blueprint.post("/cart/item/<int:product_id>")
+def set_cart_item(product_id):
+    cart = _cart()
+    raw = request.form.get("quantity", "")
+    if not raw.isascii() or not raw.isdigit() or len(raw) > 2:
+        return jsonify({"error": "Số lượng không hợp lệ."}), 400
+    quantity = int(raw)
+    product = db.session.scalar(select(Product).where(Product.id == product_id, Product.is_active.is_(True)))
+    warning = None
+    removed = False
+    if not product:
+        cart.pop(str(product_id), None)
+        removed = True
+        warning = "Sản phẩm đã ngừng bán và được bỏ khỏi giỏ."
+    elif quantity <= 0:
+        cart.pop(str(product_id), None)
+        removed = True
+    else:
+        if quantity > 20:
+            quantity = 20
+            warning = "Mỗi mã hàng tối đa 20 sản phẩm."
+        if quantity > product.stock_quantity:
+            quantity = product.stock_quantity
+            warning = "Số lượng vượt tồn kho, đã điều chỉnh về mức còn lại." if quantity > 0 else "Sản phẩm đã hết hàng."
+        if quantity <= 0:
+            cart.pop(str(product_id), None)
+            removed = True
+        else:
+            cart[str(product_id)] = quantity
+    session["cart"] = cart
+    line_total = (product.selling_price * cart[str(product_id)]) if product and str(product_id) in cart else 0
+    return jsonify(dict(_cart_summary(cart), quantity=cart.get(str(product_id), 0), removed=removed,
+                        line_total_display=_vnd(line_total), warning=warning))
+
+
+@blueprint.post("/cart/discount")
+def cart_discount():
+    code = (request.form.get("code") or "").strip().upper()
+    if code and code not in DISCOUNTS:
+        return jsonify(dict(_cart_summary(_cart()), error="Mã giảm giá không hợp lệ.")), 422
+    if code:
+        session["discount"] = code
+    else:
+        session.pop("discount", None)
+    return jsonify(dict(_cart_summary(_cart()), applied=bool(code)))
 
 
 @blueprint.route("/register", methods=["GET", "POST"])

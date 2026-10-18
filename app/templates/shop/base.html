@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111b34">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}TechFlow Store{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.min.css') }}">
@@ -10,35 +11,60 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/storefront.css') }}">
   {% block extra_css %}{% endblock %}
   <link rel="stylesheet" href="{{ url_for('static', filename='css/features.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
 </head>
 <body class="storefront-page {% block body_class %}{% endblock %}">
 {% block body %}
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <header class="store-header">
+    <button class="store-nav-toggle" type="button" aria-label="Mở menu" aria-controls="store-nav" aria-expanded="false" data-nav-toggle><i class="bi bi-list" aria-hidden="true"></i></button>
     <a class="tf-brand" href="{{ url_for('shop.index') }}"><span class="brand-icon"><i class="bi bi-stack" aria-hidden="true"></i></span><span>TechFlow<small>CỬA HÀNG CÔNG NGHỆ</small></span></a>
-    <nav class="store-nav" aria-label="Điều hướng cửa hàng">
-      <a href="{{ url_for('shop.index') }}">Sản phẩm</a>
-      <a href="{{ url_for('shop.cart') }}"><i class="bi bi-bag" aria-hidden="true"></i> Giỏ hàng{% if cart_count|default(0) %} <span class="store-count">{{ cart_count }}</span>{% endif %}</a>
-      {% if current_user.is_authenticated and current_user.role == 'client' %}
-        <a href="{{ url_for('shop.orders') }}">Đơn hàng</a><a href="{{ url_for('shop.profile') }}">Tài khoản</a>
-        <form action="{{ url_for('auth.logout') }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Đăng xuất</button></form>
-      {% elif current_user.is_authenticated %}
-        <form action="{{ url_for('auth.logout') }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Đăng xuất</button></form>
-      {% else %}
-        <a href="{{ url_for('auth.login') }}">Đăng nhập</a><a class="store-signup" href="{{ url_for('shop.register') }}">Tạo tài khoản</a>
-      {% endif %}
+    <form class="store-search" role="search" method="get" action="{{ url_for('shop.index') }}">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <input type="search" name="q" value="{{ request.args.get('q', '') }}" placeholder="Tìm sản phẩm, thương hiệu..." aria-label="Tìm sản phẩm">
+      <button type="submit" class="visually-hidden">Tìm</button>
+    </form>
+    <nav id="store-nav" class="store-nav" aria-label="Điều hướng cửa hàng">
+      <a class="store-nav-link {{ 'active' if request.endpoint == 'shop.index' }}" href="{{ url_for('shop.index') }}">Sản phẩm</a>
+      <a class="store-nav-link {{ 'active' if request.endpoint == 'content.blog' }}" href="{{ url_for('content.blog') }}">Blog</a>
     </nav>
+    <div class="store-actions">
+      <a class="store-icon" href="{{ url_for('engagement.compare') }}" aria-label="So sánh sản phẩm" title="So sánh"><i class="bi bi-bar-chart-steps" aria-hidden="true"></i><span class="store-count{% if not compare_count|default(0) %} d-none{% endif %}" data-compare-count>{{ compare_count|default(0) }}</span></a>
+      {% if current_user.is_authenticated and current_user.role == 'client' %}<a class="store-icon" href="{{ url_for('engagement.favorites') }}" aria-label="Sản phẩm yêu thích" title="Yêu thích"><i class="bi bi-heart" aria-hidden="true"></i><span class="store-count{% if not favorite_count|default(0) %} d-none{% endif %}" data-favorite-count>{{ favorite_count|default(0) }}</span></a>{% endif %}
+      <a class="store-icon" href="{{ url_for('shop.cart') }}" aria-label="Giỏ hàng" title="Giỏ hàng"><i class="bi bi-bag" aria-hidden="true"></i><span class="store-count{% if not cart_count|default(0) %} d-none{% endif %}" data-cart-count>{{ cart_count|default(0) }}</span></a>
+      {% if current_user.is_authenticated and current_user.role == 'client' %}
+      <div class="dropdown store-account">
+        <button class="store-icon store-account-toggle" type="button" id="accountMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu tài khoản"><i class="bi bi-person-circle" aria-hidden="true"></i><span class="store-account-name">{{ current_user.full_name or 'Tài khoản' }}</span></button>
+        <ul class="dropdown-menu dropdown-menu-end store-account-menu" aria-labelledby="accountMenu">
+          <li><a class="dropdown-item" href="{{ url_for('shop.orders') }}"><i class="bi bi-receipt" aria-hidden="true"></i> Đơn hàng</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('engagement.warranties') }}"><i class="bi bi-shield-check" aria-hidden="true"></i> Bảo hành của tôi</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('content.contributions') }}"><i class="bi bi-star" aria-hidden="true"></i> Đánh giá của tôi</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('support.inbox') }}"><i class="bi bi-life-preserver" aria-hidden="true"></i> Hộp thư hỗ trợ{% if support_unread|default(0) %} <span class="badge bg-danger rounded-pill">{{ support_unread }}</span>{% endif %}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('shop.profile') }}"><i class="bi bi-person" aria-hidden="true"></i> Tài khoản</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><form action="{{ url_for('auth.logout') }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Đăng xuất</button></form></li>
+        </ul>
+      </div>
+      {% elif current_user.is_authenticated %}
+      <form class="store-logout" action="{{ url_for('auth.logout') }}" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="store-icon" aria-label="Đăng xuất" title="Đăng xuất"><i class="bi bi-box-arrow-right" aria-hidden="true"></i></button></form>
+      {% else %}
+      <a class="store-login" href="{{ url_for('auth.login') }}">Đăng nhập</a><a class="store-signup" href="{{ url_for('shop.register') }}">Tạo tài khoản</a>
+      {% endif %}
+    </div>
   </header>
   <main id="main-content" class="store-main">
-    <nav class="feature-links" aria-label="Tiện ích cửa hàng"><a href="{{ url_for('content.blog') }}">Blog công nghệ</a>{% if current_user.is_authenticated and current_user.role == 'client' %}<a href="{{ url_for('content.contributions') }}">Đánh giá & bình luận</a>{% endif %}</nav>
-    <nav class="feature-links" aria-label="Dịch vụ khách hàng"><a href="{{ url_for('engagement.compare') }}">So sánh</a>{% if current_user.is_authenticated and current_user.role == 'client' %}<a href="{{ url_for('engagement.favorites') }}">Yêu thích</a><a href="{{ url_for('engagement.warranties') }}">Bảo hành của tôi</a><a href="{{ url_for('support.inbox') }}">Hộp thư hỗ trợ</a>{% endif %}</nav>
     {% include 'components/flash.html' %}
     {% block content %}{% endblock %}
   </main>
+  {% include 'shop/_compare_bar.html' %}
   <footer class="store-footer">TechFlow · Mua sắm dễ dàng, theo dõi đơn hàng rõ ràng.</footer>
   {% block extra_js %}{% endblock %}
 {% endblock %}
   <script src="{{ url_for('static', filename='vendor/bootstrap/bootstrap.bundle.min.js') }}" defer></script>
   <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/storefront-nav.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/compare.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/favorites.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/cart.js') }}" defer></script>
 </body>
 </html>

@@ -1,2 +1,36 @@
 {% extends 'shop/base.html' %}
-{% block content %}<section class="panel"><h1>So sánh sản phẩm</h1><p>Chọn tối đa 4 sản phẩm từ trang chi tiết hoặc danh sách yêu thích. Lựa chọn so sánh lưu trong phiên trình duyệt.</p>{% if products %}<div class="table-responsive"><table class="table feature-comparison"><thead><tr><th>Thuộc tính</th>{% for p in products %}<th>{{ p.name }}</th>{% endfor %}</tr></thead><tbody>{% for key,label in [('sku','SKU'), ('brand','Hãng'), ('model','Model'), ('description','Cấu hình / mô tả'), ('selling_price','Giá'), ('stock_quantity','Số lượng còn')] %}<tr><th>{{ label }}</th>{% for p in products %}<td>{{ p.selling_price|vnd if key == 'selling_price' else p|attr(key) if p|attr(key) is not none else 'Chưa cung cấp' }}</td>{% endfor %}</tr>{% endfor %}<tr><th>Danh mục</th>{% for p in products %}<td>{{ p.category.name }}</td>{% endfor %}</tr><tr><th>Trạng thái</th>{% for p in products %}<td>{{ 'Ngừng bán' if not p.is_active else 'Còn hàng' if p.stock_quantity else 'Hết hàng' }}</td>{% endfor %}</tr><tr><th>Thao tác</th>{% for p in products %}<td>{% if p.is_active %}<a href="{{ url_for('shop.product_detail', product_id=p.id) }}">Xem sản phẩm</a>{% endif %}<form class="mt-2" method="post" action="{{ url_for('engagement.compare_toggle', product_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger">Bỏ so sánh</button></form></td>{% endfor %}</tr></tbody></table></div>{% else %}<p>Chưa chọn sản phẩm. <a href="{{ url_for('shop.index') }}">Đến cửa hàng</a></p>{% endif %}</section>{% endblock %}
+{% block title %}So sánh sản phẩm · TechFlow{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/shop-detail.css') }}">{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>So sánh sản phẩm</h1>
+  {% if products %}
+  <div class="compare-toolbar">
+    <p class="store-muted mb-0">Đang so sánh {{ products|length }} sản phẩm (tối đa {{ compare_max|default(4) }}). Lựa chọn lưu trong phiên trình duyệt.</p>
+    <label class="compare-difftoggle"><input type="checkbox" data-diff-toggle> Chỉ hiện điểm khác nhau</label>
+  </div>
+  <div class="table-responsive">
+    <table class="table feature-comparison compare-table">
+      <tbody>
+        <tr class="compare-keep"><th>Ảnh</th>{% for p in products %}<td><img class="compare-thumb" src="{{ product_image_src(p) }}" alt="{{ p.name }}" loading="lazy"></td>{% endfor %}</tr>
+        <tr class="{{ 'is-diff' if products|map(attribute='name')|unique|list|length > 1 }}"><th>Tên</th>{% for p in products %}<td><a href="{{ url_for('shop.product_detail', product_id=p.id) }}">{{ p.name }}</a></td>{% endfor %}</tr>
+        <tr class="{{ 'is-diff' if products|map(attribute='selling_price')|unique|list|length > 1 }}"><th>Giá</th>{% for p in products %}<td class="compare-price">{{ p.selling_price|vnd }}</td>{% endfor %}</tr>
+        <tr class="{{ 'is-diff' if products|map(attribute='brand')|unique|list|length > 1 }}"><th>Thương hiệu</th>{% for p in products %}<td>{{ p.brand or 'Chưa cập nhật' }}</td>{% endfor %}</tr>
+        <tr class="{{ 'is-diff' if products|map(attribute='model')|unique|list|length > 1 }}"><th>Model</th>{% for p in products %}<td>{{ p.model or 'Chưa cập nhật' }}</td>{% endfor %}</tr>
+        <tr class="{{ 'is-diff' if products|map(attribute='warranty_months')|unique|list|length > 1 }}"><th>Bảo hành</th>{% for p in products %}<td>{% if p.warranty_enabled and p.warranty_months %}{{ p.warranty_months }} tháng{% else %}Không có{% endif %}</td>{% endfor %}</tr>
+        <tr class="{{ 'is-diff' if products|map(attribute='stock_quantity')|unique|list|length > 1 }}"><th>Tồn kho</th>{% for p in products %}<td>{% if p.stock_quantity %}Còn {{ p.stock_quantity }}{% else %}Hết hàng{% endif %}</td>{% endfor %}</tr>
+        <tr><th>Danh mục</th>{% for p in products %}<td>{{ p.category.name }}</td>{% endfor %}</tr>
+        <tr><th>Điểm đánh giá</th>{% for p in products %}{% set r = ratings.get(p.id, {}) %}<td>{% if r.get('count') %}{{ '%.1f'|format(r.avg) }}/5 ({{ r.count }} đánh giá){% else %}Chưa có{% endif %}</td>{% endfor %}</tr>
+        <tr><th>Mô tả</th>{% for p in products %}<td class="compare-desc">{{ p.description or 'Chưa cập nhật' }}</td>{% endfor %}</tr>
+        <tr class="compare-keep"><th>Thao tác</th>{% for p in products %}<td>
+          <form method="post" action="{{ url_for('shop.add_to_cart', product_id=p.id) }}" class="mb-2"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="quantity" value="1"><button class="btn btn-primary btn-sm" {% if not p.stock_quantity %}disabled{% endif %}>Thêm giỏ</button></form>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-compare-remove="{{ p.id }}">Bỏ so sánh</button>
+        </td>{% endfor %}</tr>
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="store-empty"><i class="bi bi-bar-chart-steps fs-2" aria-hidden="true"></i><h2>Chưa có sản phẩm để so sánh</h2><p>Vào <a href="{{ url_for('shop.index') }}">cửa hàng</a> và bấm "So sánh" trên các sản phẩm cùng danh mục.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

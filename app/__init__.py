@@ -4,7 +4,7 @@ from flask import Flask, request
 
 from app.config import load_config
 from app.extensions import csrf, db, login_manager, migrate
-from app.services.image_storage import display_product_image, s3_image_origin
+from app.services.image_storage import display_product_image, product_image_src, s3_image_origin
 
 
 def create_app() -> Flask:
@@ -70,9 +70,14 @@ def create_app() -> Flask:
 
     @app.template_filter("vnd")
     def format_vnd(value):
-        return format(value, ",.2f").replace(",", "_").replace(".", ",").replace("_", ".") + " ₫"
+        try:
+            amount = int(round(float(value)))
+        except (TypeError, ValueError):
+            return "0 ₫"
+        return f"{amount:,}".replace(",", ".") + " ₫"
 
     app.add_template_filter(display_product_image, "product_image")
+    app.add_template_global(product_image_src, "product_image_src")
 
     @app.context_processor
     def feature_context():

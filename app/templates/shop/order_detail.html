@@ -1,6 +1,9 @@
 {% extends 'shop/base.html' %}
 {% block title %}Đơn {{ order.order_code }} · TechFlow{% endblock %}
 {% block content %}
+<div class="account-layout">
+  {% include 'shop/_account_sidebar.html' %}
+  <div class="account-content">
 <section class="panel"><p><a href="{{ url_for('shop.orders') }}">Đơn hàng của tôi</a> / {{ order.order_code }}</p><span class="store-eyebrow">CHI TIẾT ĐƠN HÀNG</span><h1>{{ order.order_code }}</h1>
 <p>Đặt lúc {{ order.order_date|vietnam_time }} · Trạng thái: <strong>{{ fulfillment_labels.get(order.fulfillment_status, order.fulfillment_status) }}</strong></p>
 <div class="table-responsive"><table class="table store-table"><thead><tr><th>Sản phẩm</th><th>Đơn giá</th><th>Số lượng</th><th>Thành tiền</th></tr></thead><tbody>{% for item in order.items %}<tr><td>{{ item.product.name }}</td><td>{{ item.unit_price|vnd }}</td><td>{{ item.quantity }}</td><td>{{ item.line_total|vnd }}</td></tr>{% endfor %}</tbody></table></div>
@@ -8,4 +11,6 @@
 {% include 'shop/order_history.html' %}
 {% if order.status == 'draft' and order.fulfillment_status == 'waiting' %}<form method="post" action="{{ url_for('shop.cancel_order', order_id=order.id) }}">{{ form.hidden_tag() }}<button class="btn btn-outline-danger" type="submit">Hủy đơn hàng</button></form>{% endif %}
 </section>
+  </div>
+</div>
 {% endblock %}

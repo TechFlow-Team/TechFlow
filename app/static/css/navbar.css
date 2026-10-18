@@ -1,0 +1,282 @@
+/* ==========================================================================
+   TechFlow storefront — header điều hướng + sidebar tài khoản (Mục 7)
+   Nạp SAU storefront.css/features.css để thắng độ ưu tiên.
+   Giữ tông xanh dương; hoạt động trên cả nền sáng/tối.
+   ========================================================================== */
+:root {
+  --tf-blue: #1b3a8f;
+  --tf-blue-soft: rgba(27, 58, 143, .14);
+  --tf-badge: #e4572e;
+  --tf-line: rgba(127, 127, 127, .25);
+  --tf-hover: rgba(127, 127, 127, .14);
+}
+
+.store-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 12px 20px;
+}
+.store-header .tf-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  font-weight: 700;
+  color: inherit;
+}
+
+/* Ô tìm kiếm */
+.store-search {
+  flex: 1 1 280px;
+  min-width: 180px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(127, 127, 127, .12);
+  border: 1px solid var(--tf-line);
+  border-radius: 999px;
+}
+.store-search i { opacity: .7; }
+.store-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: .95rem;
+  outline: none;
+}
+.store-search input::placeholder { color: inherit; opacity: .6; }
+
+/* Liên kết chính */
+.store-nav { display: flex; align-items: center; gap: 6px; }
+.store-nav-link {
+  padding: 8px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.store-nav-link:hover,
+.store-nav-link.active { background: var(--tf-blue-soft); color: var(--tf-blue); }
+
+/* Cụm icon + tài khoản */
+.store-actions { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.store-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 1.15rem;
+}
+.store-icon:hover { background: var(--tf-hover); }
+
+/* Huy hiệu số trên icon */
+.store-count {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .7rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  background: var(--tf-badge);
+  border-radius: 999px;
+}
+
+/* Menu tài khoản */
+.store-account-toggle { font-size: 1rem; }
+.store-account-name {
+  font-size: .9rem;
+  font-weight: 600;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.store-account-menu { min-width: 240px; padding: 6px; }
+.store-account-menu .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.store-account-menu form { margin: 0; }
+.store-account-menu .badge { margin-left: auto; }
+
+/* Khách chưa đăng nhập */
+.store-login, .store-signup {
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.store-login { color: inherit; }
+.store-signup { background: var(--tf-blue); color: #fff; }
+.store-logout { margin: 0; }
+
+/* Nút hamburger (ẩn ở desktop) */
+.store-nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+/* Focus rõ ràng cho khả năng tiếp cận */
+.store-icon:focus-visible,
+.store-nav-link:focus-visible,
+.store-nav-toggle:focus-visible,
+.store-search input:focus-visible,
+.account-sidebar a:focus-visible {
+  outline: 2px solid var(--tf-blue);
+  outline-offset: 2px;
+}
+
+/* Bố cục trang tài khoản: sidebar + nội dung */
+.account-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.account-sidebar {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid rgba(127, 127, 127, .2);
+  border-radius: 14px;
+  background: rgba(127, 127, 127, .05);
+}
+.account-sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+  font-weight: 600;
+}
+.account-sidebar a:hover { background: var(--tf-hover); }
+.account-sidebar a.active { background: var(--tf-blue); color: #fff; }
+.account-sidebar a .badge { margin-left: auto; }
+
+/* Mobile */
+@media (max-width: 860px) {
+  .store-nav-toggle { display: inline-flex; }
+  .store-nav {
+    order: 5;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    display: none;
+  }
+  .store-nav.is-open { display: flex; }
+  .store-search { order: 6; flex-basis: 100%; }
+  .store-account-name { display: none; }
+  .account-layout { grid-template-columns: 1fr; }
+  .account-sidebar {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .account-sidebar a { flex: 1 1 auto; justify-content: center; }
+}
+
+/* ===== So sánh (Mục 2): thanh nổi + chip + nút thẻ + bảng diff ===== */
+.store-compare-btn.is-active {
+  background: var(--tf-blue); color: #fff; border-color: var(--tf-blue);
+}
+.compare-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1030;
+  background: #111b34; color: #fff;
+  box-shadow: 0 -6px 20px rgba(0, 0, 0, .25);
+}
+.compare-bar__inner {
+  display: flex; align-items: center; gap: 14px;
+  max-width: 1200px; margin: 0 auto; padding: 10px 16px; flex-wrap: wrap;
+}
+.compare-bar__title { font-weight: 700; white-space: nowrap; }
+.compare-bar__items { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; min-width: 0; }
+.compare-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255, 255, 255, .12); border-radius: 999px; padding: 3px 6px 3px 3px;
+}
+.compare-chip img { width: 30px; height: 30px; object-fit: cover; border-radius: 50%; background: #fff; }
+.compare-chip__name { font-size: .8rem; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compare-chip__remove {
+  border: 0; background: transparent; color: #fff; cursor: pointer;
+  display: inline-flex; padding: 2px; border-radius: 50%; font-size: .8rem;
+}
+.compare-chip__remove:hover { background: rgba(255, 255, 255, .2); }
+.compare-bar__actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.compare-bar__clear { color: #cdd6f4; }
+.compare-bar__go.disabled { opacity: .5; pointer-events: none; }
+
+/* Bảng so sánh */
+.compare-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+.compare-difftoggle { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.feature-comparison th { white-space: nowrap; }
+.feature-comparison tr.is-diff > td { background: rgba(245, 166, 35, .12); }
+.feature-comparison.show-diff-only tr:not(.is-diff):not(.compare-keep) { display: none; }
+.compare-thumb { width: 90px; height: 70px; object-fit: contain; background: #fff; border-radius: 8px; }
+.compare-desc { max-width: 280px; font-size: .85rem; }
+
+/* ===== Toast dùng chung (Mục 2 + 8) ===== */
+.tf-toast {
+  position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%) translateY(16px);
+  background: #111b34; color: #fff; padding: 10px 18px; border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .3); z-index: 1080; font-weight: 600;
+  opacity: 0; pointer-events: none; transition: opacity .25s ease, transform .25s ease; max-width: 90vw;
+}
+.tf-toast.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ===== Yêu thích (Mục 3): tim trên thẻ ===== */
+.store-card { position: relative; }
+.favorite-heart {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  width: 38px; height: 38px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, .92); color: #e4572e;
+  font-size: 1.1rem; cursor: pointer; text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .18);
+}
+.favorite-heart:hover { background: #fff; transform: scale(1.06); }
+.favorite-heart .bi-heart-fill { color: #e4572e; }
+.favorite-btn.is-active { background: #e4572e; color: #fff; border-color: #e4572e; }
+.favorites-empty { text-align: center; padding: 42px 12px; }
+.favorites-empty .bi { color: #e4572e; }
