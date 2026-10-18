@@ -164,13 +164,17 @@ def test_staff_pagination_and_status_filter_are_scoped(auth_client,account,catal
     receipt(account,catalog,5,True)
     user=db.session.get(User,account['id']);user.role='staff';db.session.commit()
     ids=[order(account,catalog,1) for _ in range(11)]
+    # Online client orders are also in the staff queue; isolate these fixture orders.
+    for identifier in ids:
+        db.session.get(SalesOrder, identifier).customer_name = 'Pagination-' + catalog['suffix']
+    db.session.commit()
     login(auth_client,account)
-    first=auth_client.get('/business/sales?status=draft&page=1')
-    second=auth_client.get('/business/sales?status=draft&page=2')
+    first=auth_client.get('/business/sales?status=draft&page=1&q=Pagination-' + catalog['suffix'])
+    second=auth_client.get('/business/sales?status=draft&page=2&q=Pagination-' + catalog['suffix'])
     def shown(page):
         return {int(value) for value in re.findall(r'href="/business/sales/(\d+)"',page.text)}
     assert first.status_code==second.status_code==200
     assert len(shown(first))==10 and len(shown(second))==1
     assert shown(first).isdisjoint(shown(second))
     assert shown(first)|shown(second)==set(ids)
-    assert not shown(auth_client.get('/business/sales?status=cancelled'))
+    assert not shown(auth_client.get('/business/sales?status=cancelled&q=Pagination-' + catalog['suffix']))
