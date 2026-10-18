@@ -60,7 +60,7 @@ def catalog(mysql_app):
     from app.extensions import db
     from app.models import Business, Category, Product, User
     suffix = secrets.token_hex(6)
-    user = User(username=f"test-{suffix}", full_name="Người dùng kiểm thử", role="staff")
+    user = User(username=f"test-{suffix}", full_name="Người dùng kiểm thử", role="staff", task_groups='inventory,orders,warranty')
     user.set_password(secrets.token_urlsafe(24))
     category = Category(code=f"TEST-{suffix}", name=f"Danh mục test {suffix}")
     business = Business(code=f"TEST-{suffix}", name="Nhà cung cấp kiểm thử")

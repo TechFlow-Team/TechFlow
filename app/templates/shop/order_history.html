@@ -1,0 +1,4 @@
+<h2>Lịch sử xử lý</h2>
+<ol class="list-group mb-4">
+{% for event in order.events %}<li class="list-group-item"><strong>{{ fulfillment_labels.get(event.status, event.status) }}</strong> · {{ event.created_at|vietnam_time }} · {{ event.actor.full_name if event.actor else 'Hệ thống' }}<p class="mb-0">{{ event.note or '' }}</p></li>{% else %}<li class="list-group-item">Chưa có mốc xử lý.</li>{% endfor %}
+</ol>

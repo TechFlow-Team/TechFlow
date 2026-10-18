@@ -52,7 +52,7 @@ def detail_context(record, form=None, assignment=None, message=None):
     if request.method=='GET':
         form.expected_status.data=record.status;assignment.expected_status.data=record.status
     assignment.assignee.choices=[(0,'Chọn người phụ trách')]+[(u.id,u.full_name+' · '+u.role) for u in db.session.scalars(
-        select(User).where(User.is_active.is_(True)).order_by(User.full_name))] if current_user.role=='admin' else []
+        select(User).where(User.is_active.is_(True)).order_by(User.full_name)) if u.has_permission('warranty')] if current_user.role=='admin' else []
     if request.method=='GET':
         assignment.assignee.data=record.assigned_to if record.assigned_to in dict(assignment.assignee.choices) else 0
     events=db.session.scalars(select(WarrantyEvent).where(WarrantyEvent.ticket_id==record.id).order_by(WarrantyEvent.id.desc()).limit(50)).all()
@@ -160,7 +160,7 @@ def handle(ticket_id):
 @admin_required
 def assign(ticket_id):
     record=record_for_actor(ticket_id);form=AssignmentForm()
-    form.assignee.choices=[(u.id,u.full_name) for u in db.session.scalars(select(User).where(User.is_active.is_(True)))]
+    form.assignee.choices=[(u.id,u.full_name) for u in db.session.scalars(select(User).where(User.is_active.is_(True))) if u.has_permission('warranty')]
     message='Người phụ trách chưa hợp lệ.';status=422
     if form.validate_on_submit():
         try:

@@ -1,0 +1,2 @@
+{% extends 'layouts/staff.html' %}
+{% block workspace_content %}<section class="ws-panel"><h1>Tổng quan dành cho nhân viên</h1><p>Chào {{ current_user.full_name }}. Chọn nhiệm vụ được cấp quyền trong menu.</p>{% if not current_user.task_groups %}<p>Tài khoản chưa có nhóm nhiệm vụ. Admin có thể cấp quyền tại trang Tài khoản Staff.</p>{% endif %}</section>{% endblock %}

@@ -1,12 +1,12 @@
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, session, url_for
 from flask_login import current_user, login_user
-from sqlalchemy import or_, select
+from sqlalchemy import or_, select, func
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import selectinload
 
 from app.auth.permissions import client_required
 from app.extensions import db
-from app.models import Category, Customer, Product, SalesOrder, SalesOrderItem, User
+from app.models import Category, Customer, Product, SalesOrder, SalesOrderItem, User, ProductReview
 from app.services.client_order_service import cancel_client_order, place_client_order
 from app.services.customer_service import normalize_registered_profile
 from app.services.inventory_service import InventoryError
@@ -75,7 +75,10 @@ def product_detail(product_id):
     product = db.session.scalar(select(Product).where(Product.id == product_id, Product.is_active.is_(True)))
     if not product:
         abort(404)
-    return render_template("shop/product.html", product=product)
+    visible = (ProductReview.product_id == product_id, ProductReview.status == 'visible')
+    reviews = db.session.scalars(select(ProductReview).where(*visible).order_by(ProductReview.id.desc()).limit(50)).all()
+    summary = db.session.execute(select(func.count(), func.avg(ProductReview.rating)).where(*visible)).one()
+    return render_template("shop/product.html", product=product, reviews=reviews, review_summary=summary)
 
 
 @blueprint.post("/shop/cart/<int:product_id>")

@@ -2,7 +2,7 @@
 {% import 'components/navigation.html' as nav %}
 {% set home_url = workspace_home|default(url_for('admin.dashboard') if current_user.role == 'admin' else url_for('dashboard.staff')) %}
 {% set role_label = 'Quản trị viên' if current_user.role == 'admin' else 'Nhân viên' %}
-{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/workspace.css') }}"><link rel="stylesheet" href="{{ url_for('static', filename='css/features.css') }}">{% endblock %}
 {% block body_class %}workspace-page {% block workspace_kind %}{% endblock %}-workspace{% endblock %}
 {% block body %}
 <aside class="ws-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="workspace-sidebar" aria-labelledby="workspace-brand">

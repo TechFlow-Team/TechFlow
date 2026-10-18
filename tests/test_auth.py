@@ -23,7 +23,7 @@ def account(mysql_app):
     suffix = secrets.token_hex(7)
     password = secrets.token_urlsafe(24)
     user = User(username=f"auth-{suffix}", email=f"auth-{suffix}@example.invalid",
-                full_name="Quản trị kiểm thử", role="admin", is_active=True)
+                full_name="Quản trị kiểm thử", role="admin", is_active=True, task_groups='inventory,orders,warranty')
     user.set_password(password)
     db.session.add(user)
     db.session.commit()

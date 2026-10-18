@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/techflow.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/storefront.css') }}">
   {% block extra_css %}{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/features.css') }}">
 </head>
 <body class="storefront-page {% block body_class %}{% endblock %}">
 {% block body %}
@@ -29,6 +30,8 @@
     </nav>
   </header>
   <main id="main-content" class="store-main">
+    <nav class="feature-links" aria-label="Tiện ích cửa hàng"><a href="{{ url_for('content.blog') }}">Blog công nghệ</a>{% if current_user.is_authenticated and current_user.role == 'client' %}<a href="{{ url_for('content.contributions') }}">Đánh giá & bình luận</a>{% endif %}</nav>
+    <nav class="feature-links" aria-label="Dịch vụ khách hàng"><a href="{{ url_for('engagement.compare') }}">So sánh</a>{% if current_user.is_authenticated and current_user.role == 'client' %}<a href="{{ url_for('engagement.favorites') }}">Yêu thích</a><a href="{{ url_for('engagement.warranties') }}">Bảo hành của tôi</a><a href="{{ url_for('support.inbox') }}">Hộp thư hỗ trợ</a>{% endif %}</nav>
     {% include 'components/flash.html' %}
     {% block content %}{% endblock %}
   </main>

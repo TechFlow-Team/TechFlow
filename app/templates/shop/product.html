@@ -11,4 +11,6 @@
     </div>
   </article>
 </section>
+{% include 'features/reviews.html' %}
+<section class="panel mt-3 d-flex gap-2"><form method="post" action="{{ url_for('engagement.compare_toggle', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-primary">Chọn/bỏ so sánh</button></form>{% if current_user.is_authenticated and current_user.role == 'client' %}<form method="post" action="{{ url_for('engagement.favorite_toggle', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger">Chọn/bỏ yêu thích</button></form>{% endif %}</section>
 {% endblock %}

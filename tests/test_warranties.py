@@ -217,7 +217,7 @@ def test_legacy_verification_preserves_snapshots(sold,catalog):
 
 def test_staff_scope_lookup_assign_and_http(auth_client,account,sold,catalog):
     tid=intake(sold)
-    other=User(username='wstaff-'+secrets.token_hex(6),full_name='Staff bảo hành',role='staff');other.set_password(secrets.token_urlsafe(24))
+    other=User(username='wstaff-'+secrets.token_hex(6),full_name='Staff bảo hành',role='staff',task_groups='warranty');other.set_password(secrets.token_urlsafe(24))
     db.session.add(other);db.session.commit();other_id=other.id
     with pytest.raises(InventoryError) as error:
         service.handle_ticket(other_id,tid,'processing','received',result='Private')

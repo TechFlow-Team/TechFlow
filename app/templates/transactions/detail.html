@@ -3,6 +3,16 @@
 {% block title %}{{ record|attr(code_field) }} · TechFlow{% endblock %}
 {% block breadcrumb %}<a href="{{ url_for(kind+'.index') }}">{{ label }}</a> / Chi tiết{% endblock %}
 {% block transaction_content %}
+{% if kind == 'sales' %}
+<section class="ws-panel mb-3"><h2>Tiến độ giao hàng: {{ fulfillment_labels.get(record.fulfillment_status, record.fulfillment_status) }}</h2>
+{% set order = record %}{% include 'shop/order_history.html' %}
+<form class="d-flex gap-2 mb-2" method="post" action="{{ url_for('sales.act', record_id=record.id, action='note') }}">{{ form.hidden_tag() }}<input class="form-control" name="note" maxlength="1000" aria-label="Ghi chú cho khách hàng" placeholder="Ghi chú hiển thị cho khách hàng" required><button class="btn btn-outline-primary">Thêm ghi chú</button></form>
+{% if record.status == 'draft' %}
+{% for action,label in [('confirm','Xác nhận đơn'), ('ship','Bắt đầu giao'), ('reject','Từ chối đơn')] %}
+{% if (action == 'confirm' and record.fulfillment_status == 'waiting') or (action == 'ship' and record.fulfillment_status == 'confirmed') or (action == 'reject' and record.fulfillment_status in ['waiting','confirmed']) %}
+<form class="d-flex gap-2 mb-2" method="post" action="{{ url_for('sales.act', record_id=record.id, action=action) }}">{{ form.hidden_tag() }}<input class="form-control" name="note" maxlength="1000" aria-label="Ghi chú xử lý" placeholder="Ghi chú hiển thị cho khách"><button class="btn btn-outline-primary">{{ label }}</button></form>
+{% endif %}{% endfor %}{% endif %}</section>
+{% endif %}
 {% set completed_at = progress_dates.completed_at %}
 {% set is_cancelled = record.status == 'cancelled' %}
 {% set completed_known = record.status == 'completed' or completed_at %}

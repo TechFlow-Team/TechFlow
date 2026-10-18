@@ -23,3 +23,17 @@ jobs:
           docker compose --env-file .env.production.example -f docker-compose.prod.yml -f docker-compose.bootstrap.yml config --quiet
       - name: Run tests in the isolated Docker runner
         run: docker compose -f docker-compose.test.yml run --build --rm tests
+
+  mysql-tests:
+    name: MySQL migrations and business workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Generate isolated test credentials
+        shell: bash
+        run: |
+          echo "SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "MYSQL_PASSWORD=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "MYSQL_ROOT_PASSWORD=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+      - name: Run migrated MySQL integration suite
+        run: docker compose -f docker-compose.db-test.yml run --build --rm tests

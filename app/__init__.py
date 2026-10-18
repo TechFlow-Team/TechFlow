@@ -59,12 +59,28 @@ def create_app() -> Flask:
     app.register_blueprint(customers_blueprint)
     from app.warranties.routes import blueprint as warranties_blueprint
     app.register_blueprint(warranties_blueprint)
+    from app.operations import blueprint as operations_blueprint
+    app.register_blueprint(operations_blueprint)
+    from app.content import blueprint as content_blueprint
+    app.register_blueprint(content_blueprint)
+    from app.engagement import blueprint as engagement_blueprint
+    from app.support import blueprint as support_blueprint
+    app.register_blueprint(engagement_blueprint)
+    app.register_blueprint(support_blueprint)
 
     @app.template_filter("vnd")
     def format_vnd(value):
         return format(value, ",.2f").replace(",", "_").replace(".", ",").replace("_", ".") + " ₫"
 
     app.add_template_filter(display_product_image, "product_image")
+
+    @app.context_processor
+    def feature_context():
+        return {'support_labels': {'new': 'Mới', 'processing': 'Đang xử lý', 'closed': 'Đã đóng'},
+                'post_labels': {'draft': 'Nháp', 'published': 'Đã đăng', 'hidden': 'Ẩn'},
+                'contribution_labels': {'pending': 'Chờ duyệt', 'visible': 'Hiển thị', 'hidden': 'Ẩn', 'deleted': 'Đã xóa'},
+                'fulfillment_labels': {'waiting': 'Chờ xác nhận', 'confirmed': 'Đã xác nhận',
+                'shipping': 'Đang giao', 'completed': 'Hoàn tất', 'cancelled': 'Đã hủy', 'rejected': 'Bị từ chối'}}
 
     register_commands(app)
     register_error_handlers(app)
@@ -78,7 +94,7 @@ def create_app() -> Flask:
         image_sources = "'self' data:"
         if request.blueprint == "products":
             image_sources += " https: http:"
-        elif request.blueprint == "shop":
+        elif request.blueprint in {"shop", "content"}:
             image_sources += " https:"
         s3_origin = s3_image_origin(app)
         if s3_origin:

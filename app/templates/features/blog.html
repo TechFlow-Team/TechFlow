@@ -1,0 +1,3 @@
+{% extends 'shop/base.html' %}
+{% block title %}Blog công nghệ · TechFlow{% endblock %}
+{% block content %}<section class="panel"><h1>Blog công nghệ</h1><div class="row g-4">{% for post in results.items %}<article class="col-md-6"><h2><a href="{{ url_for('content.article', slug=post.slug) }}">{{ post.title }}</a></h2><p>{{ post.published_at|vietnam_time }} · {{ post.author.full_name }}</p><p>{{ post.body[:200] }}</p></article>{% else %}<p>Chưa có bài viết.</p>{% endfor %}</div>{% for n in results.iter_pages() %}{% if n %}<a class="btn btn-light" href="{{ url_for('content.blog', page=n) }}">{{ n }}</a>{% endif %}{% endfor %}</section>{% endblock %}

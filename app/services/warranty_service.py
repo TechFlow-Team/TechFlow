@@ -67,7 +67,7 @@ def new_ticket_code():
 
 
 def can_handle(actor, ticket):
-    return actor.role == 'admin' or actor.id in (ticket.created_by,ticket.assigned_to)
+    return actor.role == 'admin' or actor.has_permission('warranty') and actor.id in (ticket.created_by,ticket.assigned_to)
 
 
 def ticket_scope(actor):
@@ -94,7 +94,7 @@ def record_event(session,actor,ticket,action,previous=None,note=None):
 def verify_legacy(actor_id,item_id,start,months,reason,notes=None):
     try:
         with Session(db.engine) as session, session.begin():
-            actor=actor_for(session,actor_id)
+            actor=actor_for(session,actor_id,'warranty')
             if actor.role!='admin': raise InventoryError('Chỉ Admin được xác minh chính sách đơn cũ.',403)
             order,item=lock_sale(session,item_id)
             if session.scalar(select(WarrantyCoverage.id).where(WarrantyCoverage.sale_item_id==item_id).with_for_update()):
@@ -118,7 +118,7 @@ def create_ticket(actor_id,item_id,unit_index,serial,issue,promised_on=None,code
         raise InventoryError('Ngày hẹn trả không được trước ngày nhận.',422)
     try:
         with Session(db.engine) as session, session.begin():
-            actor=actor_for(session,actor_id)
+            actor=actor_for(session,actor_id,'warranty')
             order,item=lock_sale(session,item_id)
             if unit_index>item.quantity: raise InventoryError('Vị trí thiết bị vượt số lượng đã mua.',422)
             coverage=session.scalar(select(WarrantyCoverage).where(WarrantyCoverage.sale_item_id==item_id).with_for_update())
@@ -154,7 +154,7 @@ def handle_ticket(actor_id,ticket_id,target,expected_status,result=None,reason=N
     result=text_value(result,2000);reason=text_value(reason,1000);note=text_value(note,2000)
     try:
         with Session(db.engine) as session, session.begin():
-            actor=actor_for(session,actor_id)
+            actor=actor_for(session,actor_id,'warranty')
             # Order -> coverage -> device -> ticket, consistent with receive/cancel.
             parent=session.execute(select(WarrantyTicket.device_id,WarrantyDevice.coverage_id,WarrantyCoverage.sale_item_id)
                 .join(WarrantyDevice,WarrantyDevice.id==WarrantyTicket.device_id)
@@ -172,7 +172,7 @@ def handle_ticket(actor_id,ticket_id,target,expected_status,result=None,reason=N
                 if actor.role!='admin': raise InventoryError('Chỉ Admin được phân công xử lý.',403)
                 if ticket.status=='returned': raise InventoryError('Phiếu đã trả khách không thể phân công lại.')
                 user=session.get(User,quantity(assignee))
-                if not user or not user.is_active or user.role not in {'admin','staff'}: raise InventoryError('Người phụ trách không hợp lệ.',422)
+                if not user or not user.has_permission('warranty'): raise InventoryError('Người phụ trách chưa có quyền bảo hành.',422)
                 if user.id==ticket.assigned_to: raise InventoryError('Phiếu đã được phân công cho tài khoản này.')
                 ticket.assigned_to=user.id
                 note=f'Phân công xử lý cho tài khoản #{user.id}.'

@@ -25,6 +25,8 @@ class SalesOrder(Record, Timestamps, db.Model):
     status = db.Column(db.String(20), nullable=False, default="draft", server_default="draft", index=True)
     total_amount = db.Column(db.Numeric(14, 2), nullable=False, default=0, server_default="0")
     notes = db.Column(db.Text)
+    fulfillment_status = db.Column(db.String(20), nullable=False, default='waiting', server_default='waiting')
+    events = db.relationship('OrderEvent', order_by='OrderEvent.id', passive_deletes='all')
     creator = db.relationship("User", back_populates="sales_orders")
     items = db.relationship("SalesOrderItem", back_populates="order", passive_deletes="all")
 

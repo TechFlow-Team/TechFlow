@@ -1,9 +1,9 @@
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
 from flask_login import current_user
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from app.auth.permissions import admin_required
+from app.auth.permissions import admin_required, TASK_GROUPS
 from app.extensions import db
 from app.models import AuditLog, User
 from app.services.account_service import create_staff
@@ -48,7 +48,7 @@ def staff_accounts():
         message = "Thông tin chưa hợp lệ. Vui lòng kiểm tra lại."
     staff = db.session.scalars(select(User).where(User.role == "staff").order_by(User.full_name, User.id)).all()
     return render_template("admin/staff.html", active_page="staff", form=form, state_form=StaffStateForm(),
-                           staff_accounts=staff, message=message)
+                           staff_accounts=staff, message=message, task_groups=TASK_GROUPS)
 
 
 @blueprint.post("/admin/staff/<int:user_id>/toggle")
@@ -66,3 +66,20 @@ def toggle_staff(user_id):
     db.session.commit()
     flash(f"Đã {'kích hoạt' if user.is_active else 'vô hiệu hóa'} tài khoản {user.username}.", "success")
     return redirect(url_for("admin.staff_accounts"), code=303)
+
+
+@blueprint.post('/admin/staff/<int:user_id>/permissions')
+@admin_required
+def staff_permissions(user_id):
+    groups = request.form.getlist('groups')
+    if set(groups) - TASK_GROUPS.keys():
+        abort(422)
+    user = db.get_or_404(User, user_id)
+    if user.role != 'staff':
+        abort(403)
+    user.task_groups = ','.join(sorted(set(groups)))
+    db.session.add(AuditLog(user_id=current_user.id, action='staff_permissions', entity_type='users',
+                           entity_id=user.id, description='Nhóm quyền: ' + user.task_groups))
+    db.session.commit()
+    flash('Đã cập nhật quyền; áp dụng từ yêu cầu tiếp theo của nhân viên.', 'success')
+    return redirect(url_for('admin.staff_accounts'), code=303)

@@ -6,7 +6,12 @@
 {% block workspace_switch %}{% if current_user.role == 'admin' %}<a class="ws-switch-link" href="{{ url_for('admin.dashboard') }}" aria-label="Quay về quản trị" title="Quay về quản trị"><i class="bi bi-shield-lock" aria-hidden="true"></i><span>Quay về quản trị</span></a>{% endif %}{% endblock %}
 {% block workspace_navigation %}
   {% set page = active_page|default('dashboard') %}
+  {% if current_user.has_permission('support') %}{{ nav.link(url_for('support.inbox'), 'bi-chat-dots', 'Hộp thư hỗ trợ', page == 'support') }}{% endif %}
+  {% if current_user.has_permission('content') %}{{ nav.link(url_for('content.manage'), 'bi-journal-text', 'Nội dung & kiểm duyệt', page == 'content') }}{% endif %}
+  {% if current_user.has_permission('inventory') %}{{ nav.link(url_for('operations.low_stock'), 'bi-exclamation-triangle', 'Cảnh báo tồn kho', page == 'low_stock') }}{% endif %}
+  {% if current_user.has_permission('reports') %}{{ nav.link(url_for('operations.reports'), 'bi-bar-chart', 'Báo cáo kinh doanh', page == 'reports') }}{% endif %}
   {{ nav.link(url_for('dashboard.staff'), 'bi-grid-1x2', 'Tổng quan', active_page == 'dashboard') }}
+  {% if current_user.has_permission('orders') %}
   <details class="ws-nav-group {{ 'is-active' if page in ['sales','customers'] }}" data-nav-group="orders" {% if page in ['sales','customers'] %}open{% endif %}>
     <summary class="ws-nav-link" aria-label="Đơn hàng"><i class="bi bi-cart3" aria-hidden="true"></i><span>Đơn hàng</span><i class="bi bi-chevron-down ws-group-chevron" aria-hidden="true"></i></summary>
     <div class="ws-submenu">
@@ -15,6 +20,8 @@
     {{ nav.link(url_for('customers.index'), 'bi-people', 'Khách hàng', page == 'customers') }}
     </div>
   </details>
+  {% endif %}
+  {% if current_user.has_permission('inventory') %}
   <details class="ws-nav-group {{ 'is-active' if page in ['products','categories','businesses','purchases','inventory'] }}" data-nav-group="inventory" {% if page in ['products','categories','businesses','purchases','inventory'] %}open{% endif %}>
     <summary class="ws-nav-link" aria-label="Kho hàng"><i class="bi bi-box-seam" aria-hidden="true"></i><span>Kho hàng</span><i class="bi bi-chevron-down ws-group-chevron" aria-hidden="true"></i></summary>
     <div class="ws-submenu">
@@ -25,6 +32,8 @@
     {{ nav.link(url_for('inventory.index'), 'bi-arrow-left-right', 'Lịch sử nhập/xuất', page == 'inventory') }}
     </div>
   </details>
+  {% endif %}
+  {% if current_user.has_permission('warranty') %}
   <details class="ws-nav-group {{ 'is-active' if page == 'warranties' }}" data-nav-group="aftersales" {% if page == 'warranties' %}open{% endif %}>
     <summary class="ws-nav-link" aria-label="Hậu mãi"><i class="bi bi-shield-check" aria-hidden="true"></i><span>Hậu mãi</span><i class="bi bi-chevron-down ws-group-chevron" aria-hidden="true"></i></summary>
     <div class="ws-submenu">
@@ -32,6 +41,7 @@
     {{ nav.link(url_for('warranties.lookup'), 'bi-search', 'Tra cứu bảo hành', active_lookup|default(false)) }}
     </div>
   </details>
+  {% endif %}
   <details class="ws-nav-group" data-nav-group="account">
     <summary class="ws-nav-link" aria-label="Tài khoản"><i class="bi bi-person-circle" aria-hidden="true"></i><span>Tài khoản</span><i class="bi bi-chevron-down ws-group-chevron" aria-hidden="true"></i></summary>
     <div class="ws-submenu">{{ nav.link(url_for('dashboard.staff') ~ '#session', 'bi-person-circle', 'Thông tin cá nhân') }}</div>
