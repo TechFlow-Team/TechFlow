@@ -194,15 +194,17 @@ def build_transaction_blueprint(kind):
     @business_required
     def act(record_id, action):
         document_or_404(record_id)
-        if action not in {'complete','cancel'}:
+        if action not in ({'complete','cancel','confirm','ship','reject','note'} if kind == 'sales' else {'complete','cancel'}):
             abort(404)
         form = ActionForm()
         if not form.validate_on_submit():
             abort(400)
         try:
-            transition(kind, current_user.id, record_id, action)
+            transition(kind, current_user.id, record_id, action, request.form.get('note'))
             db.session.rollback()
-            flash('Đã xác nhận và cập nhật tồn kho.' if action == 'complete' else 'Đã hủy giao dịch theo quy tắc đảo kho.', 'success')
+            flash({'complete': 'Đã hoàn tất và cập nhật tồn kho.', 'cancel': 'Đã hủy giao dịch theo quy tắc đảo kho.',
+                   'confirm': 'Đã xác nhận đơn.', 'ship': 'Đã chuyển sang đang giao.',
+                   'reject': 'Đã từ chối đơn.', 'note': 'Đã thêm ghi chú vào lịch sử.'}[action], 'success')
         except InventoryError as error:
             if error.status == 403:
                 abort(403)

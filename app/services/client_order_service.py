@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.extensions import db
-from app.models import AuditLog, Customer, Product, SalesOrder, SalesOrderItem, User, WarrantyCoverage
+from app.models import AuditLog, Customer, Product, SalesOrder, SalesOrderItem, User, WarrantyCoverage, OrderEvent
 from app.models.base import utc_now
 from app.services.inventory_service import InventoryError, lock_products, money, quantity
 from app.services.transaction_service import new_code
@@ -57,6 +57,7 @@ def place_client_order(user_id: int, cart: dict) -> int:
                 session.add(WarrantyCoverage(sale_item_id=item.id, enabled=product.warranty_enabled,
                     months=product.warranty_months, notes=product.warranty_notes, source="sale"))
             order.total_amount = total
+            session.add(OrderEvent(order_id=order.id, actor_id=user.id, status='waiting', note='Đã nhận yêu cầu đặt hàng'))
             session.add(AuditLog(user_id=user.id, action="client_order", entity_type="sales_orders",
                 entity_id=order.id, description="Đơn hàng được gửi từ storefront"))
             identifier = order.id
@@ -78,9 +79,11 @@ def cancel_client_order(user_id: int, order_id: int) -> None:
                 raise InventoryError("Không tìm thấy đơn hàng.", 404)
             if not user or not user.is_active or user.role != "client":
                 raise InventoryError("Bạn không có quyền hủy đơn này.", 403)
-            if order.status != "draft":
+            if order.status != "draft" or order.fulfillment_status != 'waiting':
                 raise InventoryError("Chỉ đơn đang chờ xử lý mới được hủy.", 409)
             order.status = "cancelled"
+            order.fulfillment_status = 'cancelled'
+            session.add(OrderEvent(order_id=order.id, actor_id=user.id, status='cancelled', note='Khách hàng hủy đơn'))
             session.add(AuditLog(user_id=user.id, action="client_cancel", entity_type="sales_orders",
                 entity_id=order.id, description="Khách hủy đơn trước khi xử lý"))
     except InventoryError:

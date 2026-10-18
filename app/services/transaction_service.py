@@ -25,6 +25,8 @@ def permitted(actor, kind, document=None, action='view'):
     if actor.role == 'admin':
         return True
     if actor.role == 'staff':
+        if not actor.has_permission('orders'):
+            return False
         if kind != 'sales':
             return False
         if document is None:
@@ -116,6 +118,9 @@ def create_document(kind, actor_id, header, lines, code=None):
                     session.add(WarrantyCoverage(sale_item_id=item.id, enabled=product.warranty_enabled,
                         months=product.warranty_months, notes=product.warranty_notes, source='sale'))
             document.total_amount = total
+            if kind == 'sales':
+                from app.models import OrderEvent
+                session.add(OrderEvent(order_id=document.id, actor_id=actor_id, status='waiting', note='Tạo đơn hàng'))
             audit(session, actor_id, 'create_draft', model.__tablename__, document.id)
             identifier = document.id
         return identifier
@@ -129,10 +134,13 @@ def create_document(kind, actor_id, header, lines, code=None):
         raise InventoryError('Chưa thể xác nhận kết quả lưu. Kiểm tra danh sách trước khi thử lại.', 503) from None
 
 
-def transition(kind, actor_id, identifier, action):
+def transition(kind, actor_id, identifier, action, note=None):
     model, item_model, _, parent_field = checked_kind(kind)
-    if action not in {'complete', 'cancel'}:
+    if action not in ({'complete', 'cancel', 'confirm', 'ship', 'reject', 'note'} if kind == 'sales' else {'complete', 'cancel'}):
         raise InventoryError('Thao tác không hợp lệ.', 400)
+    note = (note or '').strip()
+    if len(note) > 1000:
+        raise InventoryError('Ghi chú tối đa 1000 ký tự.', 422)
     try:
         with Session(db.engine) as session, session.begin():
             actor = actor_for(session, actor_id)
@@ -141,8 +149,28 @@ def transition(kind, actor_id, identifier, action):
                 raise InventoryError('Không tìm thấy giao dịch.', 404)
             if not permitted(actor, kind, document, action):
                 raise InventoryError('Bạn không có quyền thực hiện thao tác này.', 403)
+            if kind == 'sales' and action == 'note':
+                from app.models import OrderEvent
+                if not note:
+                    raise InventoryError('Vui lòng nhập ghi chú.', 422)
+                session.add(OrderEvent(order_id=document.id, actor_id=actor.id, status=document.fulfillment_status, note=note))
+                audit(session, actor.id, 'order_note', model.__tablename__, identifier)
+                return
+            if kind == 'sales' and action in {'confirm', 'ship', 'reject'}:
+                from app.models import OrderEvent
+                allowed = {'confirm': {'waiting'}, 'ship': {'confirmed'}, 'reject': {'waiting', 'confirmed'}}
+                if document.status != 'draft' or document.fulfillment_status not in allowed[action]:
+                    raise InventoryError('Trạng thái đơn đã thay đổi; hãy tải lại.')
+                document.fulfillment_status = {'confirm': 'confirmed', 'ship': 'shipping', 'reject': 'rejected'}[action]
+                if action == 'reject':
+                    document.status = 'cancelled'
+                session.add(OrderEvent(order_id=document.id, actor_id=actor.id, status=document.fulfillment_status, note=note or None))
+                audit(session, actor.id, action, model.__tablename__, identifier)
+                return
             if document.status not in {'draft', 'completed'} or (action == 'complete' and document.status != 'draft'):
                 raise InventoryError('Trạng thái giao dịch đã thay đổi; không thể xử lý lại.')
+            if kind == 'sales' and action == 'complete' and document.creator.role == 'client' and document.fulfillment_status != 'shipping':
+                raise InventoryError('Đơn trực tuyến cần được xác nhận và giao trước khi hoàn tất.')
             items = session.scalars(select(item_model).where(getattr(item_model, parent_field) == identifier).order_by(item_model.product_id)).all()
             if not items:
                 raise InventoryError('Giao dịch không có dòng sản phẩm hợp lệ.')
@@ -181,6 +209,10 @@ def transition(kind, actor_id, identifier, action):
                         'purchase_receipt' if kind == 'purchases' else 'sales_order', identifier, actor_id,
                         'Đảo kho do hủy phiếu nhập' if kind == 'purchases' and action == 'cancel' else None)
             document.status = 'completed' if action == 'complete' else 'cancelled'
+            if kind == 'sales':
+                from app.models import OrderEvent
+                document.fulfillment_status = document.status
+                session.add(OrderEvent(order_id=document.id, actor_id=actor.id, status=document.status, note=note or None))
             audit(session, actor_id, action, model.__tablename__, identifier)
     except InventoryError:
         raise
