@@ -1,5 +1,11 @@
 # TechFlow roles and permissions
 
+Staff capabilities below additionally require the corresponding task group.
+See [feature permissions and migration](FEATURES_RELEASE.md)
+for `orders`, `inventory`, `content`, `warranty`, `support`, and `reports`.
+New staff start with no task groups; existing staff retain inventory/orders/warranty.
+Admin assigns grants at `/admin/staff`. Changes apply on the next request.
+
 | Capability | Admin | Staff | Client |
 |---|---|---|---|
 | Admin dashboard | Full access | Denied | Denied |

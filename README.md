@@ -1,6 +1,9 @@
 # TechFlow
 
 Hệ thống quản lý kinh doanh thiết bị công nghệ — đồ án Flask, Docker và Amazon EC2.
+Các chức năng mở rộng gồm theo dõi đơn, đánh giá sau mua, yêu thích/so sánh,
+bảo hành cá nhân, cảnh báo kho, báo cáo CSV, nhóm quyền Staff, blog, bình luận
+và hộp thư hỗ trợ. Xem [hướng dẫn phát hành và migration](docs/FEATURES_RELEASE.md).
 **Trạng thái: Giai đoạn 1–6, gồm khách hàng 5.1 và bảo hành 5.2, đã được tích hợp
 vào main tại baseline `ba70f97`. Đợt UI/UX trước Giai đoạn 7 đã được nghiệm thu
 trên branch `feature/ui-ux-before-stage-7`.**
@@ -8,7 +11,7 @@ trên branch `feature/ui-ux-before-stage-7`.**
 Có đăng nhập username/email, phân quyền Admin/Staff, hai workspace riêng và
 sidebar xổ xuống. Catalog lưu vào MySQL; nhập/bán cập nhật tồn bằng transaction,
 có hồ sơ khách/lịch sử mua, bảo hành và Dashboard thống kê dữ liệu thật.
-Báo cáo doanh thu nâng cao chưa triển khai. Phần chuẩn bị production/AWS đang được
+Báo cáo doanh thu và xuất CSV đã được bổ sung, xem hướng dẫn phát hành ở trên. Phần chuẩn bị production/AWS đang được
 thực hiện riêng; môi trường demo hiện dùng EC2, RDS, ECR, S3 và domain DuckDNS
 tại `ap-southeast-2`. GitHub Actions đã được cấu hình cho CI/CD; trạng thái xác nhận
 deploy mới nhất và các việc vận hành còn lại xem [hành trình dự án](docs/PROJECT_JOURNEY_AND_PRESENTATION.md).
@@ -87,7 +90,7 @@ docker compose exec web flask --app wsgi db check
 docker compose exec web flask --app wsgi seed-demo
 ```
 
-Revision hiện tại `db55d828848e`. Seed chỉ thêm bản ghi thiếu, không reset dữ liệu;
+Revision hiện tại `f005_client_index`. Seed chỉ thêm bản ghi thiếu, không reset dữ liệu;
 chạy lại tạo mới 0 bản ghi nếu dữ liệu DEMO đã đủ. Database demo trên máy này đã
 được upgrade và seed. Bảng stage1_probe và volume hiện tại được giữ nguyên.
 
