@@ -1,0 +1,9 @@
+{# Mục 7 — sidebar dọc cho trang tài khoản khách hàng #}
+<nav class="account-sidebar" aria-label="Trang tài khoản">
+  <a href="{{ url_for('shop.orders') }}" class="{{ 'active' if request.endpoint == 'shop.orders' }}"{% if request.endpoint == 'shop.orders' %} aria-current="page"{% endif %}><i class="bi bi-receipt" aria-hidden="true"></i> Đơn hàng</a>
+  <a href="{{ url_for('content.contributions') }}" class="{{ 'active' if request.endpoint == 'content.contributions' }}"{% if request.endpoint == 'content.contributions' %} aria-current="page"{% endif %}><i class="bi bi-star" aria-hidden="true"></i> Đánh giá của tôi</a>
+  <a href="{{ url_for('engagement.warranties') }}" class="{{ 'active' if request.endpoint == 'engagement.warranties' }}"{% if request.endpoint == 'engagement.warranties' %} aria-current="page"{% endif %}><i class="bi bi-shield-check" aria-hidden="true"></i> Bảo hành của tôi</a>
+  <a href="{{ url_for('engagement.favorites') }}" class="{{ 'active' if request.endpoint == 'engagement.favorites' }}"{% if request.endpoint == 'engagement.favorites' %} aria-current="page"{% endif %}><i class="bi bi-heart" aria-hidden="true"></i> Yêu thích</a>
+  <a href="{{ url_for('support.inbox') }}" class="{{ 'active' if request.endpoint in ['support.inbox', 'support.detail', 'support.create'] }}"{% if request.endpoint == 'support.inbox' %} aria-current="page"{% endif %}><i class="bi bi-life-preserver" aria-hidden="true"></i> Hộp thư hỗ trợ{% if support_unread|default(0) %} <span class="badge bg-danger rounded-pill">{{ support_unread }}</span>{% endif %}</a>
+  <a href="{{ url_for('shop.profile') }}" class="{{ 'active' if request.endpoint == 'shop.profile' }}"{% if request.endpoint == 'shop.profile' %} aria-current="page"{% endif %}><i class="bi bi-person" aria-hidden="true"></i> Tài khoản</a>
+</nav>

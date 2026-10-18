@@ -20,7 +20,10 @@
 .store-card { height:100%; border:1px solid #e8ebf2; border-radius:13px; overflow:hidden; background:white; display:flex; flex-direction:column; transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease; }
 .store-card:hover { transform:translateY(-3px); border-color:#d6e1f8; box-shadow:0 14px 30px #1e315814; }
 .store-card-media { height:190px; display:grid; place-items:center; overflow:hidden; background:linear-gradient(140deg,#f1f4fb,#e5ebf8); color:#3159c8; font-size:3rem; }
-.store-card-media img { height:100%; width:100%; object-fit:cover; }
+.store-card-media img { width:100%; height:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#eef2fb; }
+/* Buyer-UI upgrade (FOUNDATION): keep lazy card images from shifting layout */
+.store-card-media { aspect-ratio:4/3; height:auto; }
+.store-card-media img[loading="lazy"] { min-height:1px; }
 .store-card-body { padding:18px; display:flex; flex:1; flex-direction:column; }
 .store-card-body h2 { font-size:1.08rem; line-height:1.4; }
 .store-card-body a { color:#15213a; text-decoration:none; }
@@ -43,3 +46,11 @@
 .store-pagination .current { background:#3159c8; border-color:#3159c8; color:white; }
 @media(max-width:800px) { .store-header { align-items:flex-start; flex-direction:column; } .store-nav { width:100%; gap:14px; } .store-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .store-filters { grid-template-columns:1fr 1fr; } .store-product { grid-template-columns:1fr; } }
 @media(max-width:520px) { .store-grid { grid-template-columns:1fr; } .store-filters { grid-template-columns:1fr; } .store-hero { align-items:start; flex-direction:column; } .store-hero::after { right:-100px; } }
+
+/* Mục 8 — huy hiệu tồn kho + bộ lọc khoảng giá */
+.stock-badge { display:inline-block; font-size:.82rem; font-weight:600; padding:2px 10px; border-radius:999px; line-height:1.6; }
+.stock-badge--in { background:#e2ecff; color:#2746a6; }
+.stock-badge--out { background:#f1e0e0; color:#a23b3b; }
+.store-price-range { display:flex; align-items:center; gap:8px; }
+.store-price-range input { width:7rem; }
+.store-price-range span { color:#718099; }

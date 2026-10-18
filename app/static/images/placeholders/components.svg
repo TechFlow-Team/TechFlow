@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Linh kiện">
+  <rect width="400" height="300" fill="#f4f7ff"/>
+  <rect x="8" y="8" width="384" height="284" rx="16" fill="none" stroke="#d8e2f6" stroke-width="2"/>
+  <g stroke="#1b3a8f" stroke-width="8" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="140" y="92" width="120" height="120" rx="12" fill="#eaf0fd"/>
+    <rect x="170" y="122" width="60" height="60" rx="6" fill="#111b34" stroke="#111b34"/>
+    <g stroke="#1b3a8f" stroke-width="6">
+      <line x1="140" y1="118" x2="118" y2="118"/><line x1="140" y1="152" x2="118" y2="152"/><line x1="140" y1="186" x2="118" y2="186"/>
+      <line x1="260" y1="118" x2="282" y2="118"/><line x1="260" y1="152" x2="282" y2="152"/><line x1="260" y1="186" x2="282" y2="186"/>
+    </g>
+  </g>
+  <text x="200" y="268" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="22" font-weight="600" fill="#111b34">Linh kiện</text>
+</svg>

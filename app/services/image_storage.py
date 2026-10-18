@@ -80,6 +80,18 @@ def display_product_image(value):
         return ""
 
 
+def placeholder_for(product):
+    name = ((getattr(getattr(product, 'category', None), 'name', '') or '')).lower()
+    slug = ('laptop' if 'laptop' in name else 'monitor' if 'màn hình' in name else 'components' if 'linh kiện' in name else 'peripherals' if 'ngoại vi' in name else 'network' if 'mạng' in name else 'accessory' if 'phụ kiện' in name else 'default')
+    return url_for('static', filename=f'images/placeholders/{slug}.svg')
+
+
+def product_image_src(product):
+    if getattr(product, 'image_url', None):
+        return display_product_image(product.image_url)
+    return placeholder_for(product)
+
+
 def delete_product_image(value):
     if not value:
         return

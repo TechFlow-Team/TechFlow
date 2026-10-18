@@ -1,0 +1,11 @@
+{# Mục 2 — thanh so sánh nổi (sticky), nội dung do compare.js đổ vào #}
+<div id="compare-bar" class="compare-bar" hidden>
+  <div class="compare-bar__inner">
+    <span class="compare-bar__title"><i class="bi bi-bar-chart-steps" aria-hidden="true"></i> So sánh (<span data-compare-count>0</span>/4)</span>
+    <div class="compare-bar__items" data-compare-items></div>
+    <div class="compare-bar__actions">
+      <button type="button" class="btn btn-sm btn-link compare-bar__clear" data-compare-clear>Xóa tất cả</button>
+      <a class="btn btn-sm btn-light compare-bar__go disabled" data-compare-go href="{{ url_for('engagement.compare') }}">So sánh ngay</a>
+    </div>
+  </div>
+</div>

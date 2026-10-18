@@ -1,8 +1,13 @@
 {% extends 'shop/base.html' %}
 {% block title %}Đơn hàng của tôi · TechFlow{% endblock %}
 {% block content %}
+<div class="account-layout">
+  {% include 'shop/_account_sidebar.html' %}
+  <div class="account-content">
 <section class="panel"><span class="eyebrow">TÀI KHOẢN KHÁCH HÀNG</span><h1>Đơn hàng của tôi</h1>
 <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Mã đơn</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Trạng thái</th></tr></thead><tbody>
 {% for order in orders %}<tr><td><a href="{{ url_for('shop.order_detail', order_id=order.id) }}">{{ order.order_code }}</a></td><td>{{ order.order_date|vietnam_time }}</td><td>{{ order.total_amount|vnd }}</td><td>{{ fulfillment_labels.get(order.fulfillment_status, order.fulfillment_status) }}</td></tr>{% else %}<tr><td colspan="4">Bạn chưa có đơn hàng.</td></tr>{% endfor %}
 </tbody></table></div><a class="btn btn-primary" href="{{ url_for('shop.index') }}">Tiếp tục mua sắm</a></section>
+  </div>
+</div>
 {% endblock %}

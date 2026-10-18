@@ -1,16 +1,35 @@
 {% extends 'shop/base.html' %}
 {% block title %}{{ product.name }} · TechFlow{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/shop-detail.css') }}">{% endblock %}
 {% block content %}
 <section class="panel">
   <p><a href="{{ url_for('shop.index') }}">Cửa hàng</a> / {{ product.category.name }}</p>
   <article class="store-product">
-    <div class="store-product-media">{% if product.image_url|product_image %}<img src="{{ product.image_url|product_image }}" alt="{{ product.name }}">{% else %}<i class="bi bi-laptop" aria-hidden="true"></i>{% endif %}</div>
-    <div><span class="store-eyebrow">{{ product.category.name }} · {{ product.sku }}</span><h1>{{ product.name }}</h1><p class="store-muted">{{ product.brand or '' }} {{ product.model or '' }}</p><p class="store-price fs-3">{{ product.selling_price|vnd }}</p><p>{{ product.description or 'Sản phẩm công nghệ chính hãng tại TechFlow.' }}</p>
-      <dl><dt>Tình trạng kho</dt><dd>{% if product.stock_quantity %}Còn {{ product.stock_quantity }} sản phẩm{% else %}Tạm hết hàng{% endif %}</dd>{% if product.warranty_enabled %}<dt>Bảo hành</dt><dd>{{ product.warranty_months }} tháng</dd>{% endif %}</dl>
+    <div class="store-product-media">
+      <div class="product-gallery">
+        <div class="product-gallery__main"><img src="{{ product_image_src(product) }}" alt="{{ product.name }}" loading="lazy" decoding="async"></div>
+        <div class="product-gallery__thumbs"><button type="button" class="product-gallery__thumb is-active" aria-label="{{ product.name }}"><img src="{{ product_image_src(product) }}" alt="{{ product.name }}" loading="lazy" decoding="async"></button></div>
+      </div>
+    </div>
+    <div><span class="store-eyebrow">{{ product.category.name }} · {{ product.sku }}</span><h1>{{ product.name }}</h1><p class="store-muted">{{ product.brand or '' }} {{ product.model or '' }}</p><p class="store-price fs-3">{{ product.selling_price|vnd }}</p>
+      <p>{% if product.stock_quantity %}<span class="stock-badge stock-badge--in">Còn {{ product.stock_quantity }} sản phẩm</span>{% else %}<span class="stock-badge stock-badge--out">Hết hàng</span>{% endif %}</p>
       <form method="post" action="{{ url_for('shop.add_to_cart', product_id=product.id) }}" class="d-flex gap-2 align-items-center"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="product-quantity">Số lượng</label><input class="form-control store-quantity" id="product-quantity" type="number" name="quantity" value="1" min="1" max="20" {% if not product.stock_quantity %}disabled{% endif %}><button class="btn btn-primary" {% if not product.stock_quantity %}disabled{% endif %}>Thêm vào giỏ</button></form>
     </div>
   </article>
+
+  <div class="product-tabs mt-4">
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation"><button class="nav-link active" id="tab-desc-btn" data-bs-toggle="tab" data-bs-target="#tab-desc" type="button" role="tab" aria-controls="tab-desc" aria-selected="true">Mô tả</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="tab-specs-btn" data-bs-toggle="tab" data-bs-target="#tab-specs" type="button" role="tab" aria-controls="tab-specs" aria-selected="false">Thông số kỹ thuật</button></li>
+      <li class="nav-item" role="presentation"><button class="nav-link" id="tab-reviews-btn" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button" role="tab" aria-controls="tab-reviews" aria-selected="false">Đánh giá</button></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane fade show active" id="tab-desc" role="tabpanel" aria-labelledby="tab-desc-btn"><p>{{ product.description or 'Sản phẩm công nghệ chính hãng tại TechFlow.' }}</p></div>
+      <div class="tab-pane fade" id="tab-specs" role="tabpanel" aria-labelledby="tab-specs-btn"><dl class="product-specs"><dt>Thương hiệu</dt><dd>{{ product.brand or '—' }}</dd><dt>Mẫu</dt><dd>{{ product.model or '—' }}</dd><dt>Mã hàng</dt><dd>{{ product.sku }}</dd><dt>Danh mục</dt><dd>{{ product.category.name }}</dd><dt>Tình trạng kho</dt><dd>{% if product.stock_quantity %}<span class="stock-badge stock-badge--in">Còn {{ product.stock_quantity }} sản phẩm</span>{% else %}<span class="stock-badge stock-badge--out">Hết hàng</span>{% endif %}</dd>{% if product.warranty_enabled %}<dt>Bảo hành</dt><dd>{{ product.warranty_months }} tháng</dd>{% endif %}</dl></div>
+      <div class="tab-pane fade" id="tab-reviews" role="tabpanel" aria-labelledby="tab-reviews-btn">{% include 'features/reviews.html' %}</div>
+    </div>
+  </div>
 </section>
-{% include 'features/reviews.html' %}
-<section class="panel mt-3 d-flex gap-2"><form method="post" action="{{ url_for('engagement.compare_toggle', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-primary">Chọn/bỏ so sánh</button></form>{% if current_user.is_authenticated and current_user.role == 'client' %}<form method="post" action="{{ url_for('engagement.favorite_toggle', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline-danger">Chọn/bỏ yêu thích</button></form>{% endif %}</section>
+<section class="panel mt-3 d-flex gap-2 align-items-center"><button type="button" class="btn btn-outline-primary store-compare-btn" data-compare-id="{{ product.id }}" data-category-id="{{ product.category_id }}" aria-pressed="false"><i class="bi bi-bar-chart-steps" aria-hidden="true"></i> <span data-compare-label>So sánh</span></button>{% if current_user.is_authenticated and current_user.role == 'client' %}<button type="button" class="btn btn-outline-danger favorite-btn" data-favorite-id="{{ product.id }}" aria-pressed="false"><i class="bi bi-heart" aria-hidden="true"></i> <span data-favorite-label>Yêu thích</span></button>{% else %}<a class="btn btn-outline-danger" href="{{ url_for('auth.login', next=request.path) }}"><i class="bi bi-heart" aria-hidden="true"></i> Yêu thích</a>{% endif %}</section>
+{% if related %}<section class="panel mt-3"><h2>Sản phẩm liên quan</h2><div class="store-grid related-grid">{% for item in related %}<article class="store-card"><a class="store-card-media" href="{{ url_for('shop.product_detail', product_id=item.id) }}" aria-label="Xem {{ item.name }}"><img src="{{ product_image_src(item) }}" alt="{{ item.name }}" loading="lazy" decoding="async"></a><div class="store-card-body"><h3><a href="{{ url_for('shop.product_detail', product_id=item.id) }}">{{ item.name }}</a></h3><p class="store-price">{{ item.selling_price|vnd }}</p>{% if item.stock_quantity %}<span class="stock-badge stock-badge--in">Còn hàng</span>{% else %}<span class="stock-badge stock-badge--out">Hết hàng</span>{% endif %}</div></article>{% endfor %}</div></section>{% endif %}
 {% endblock %}
