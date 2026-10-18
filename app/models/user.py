@@ -18,11 +18,15 @@ class User(UserMixin, Record, Timestamps, db.Model):
     role = db.Column(db.String(20), nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True, server_default=db.true(), index=True)
     last_login_at = db.Column(db.DateTime)
+    task_groups = db.Column(db.String(200), nullable=False, default='', server_default='')
     purchase_receipts = db.relationship("PurchaseReceipt", back_populates="creator", passive_deletes="all")
     sales_orders = db.relationship("SalesOrder", back_populates="creator", passive_deletes="all")
     stock_movements = db.relationship("StockMovement", back_populates="creator", passive_deletes="all")
     audit_logs = db.relationship("AuditLog", back_populates="user", passive_deletes="all")
     customer_profile = db.relationship("Customer", back_populates="user", uselist=False, foreign_keys="Customer.user_id")
+
+    def has_permission(self, group):
+        return self.is_active and (self.role == 'admin' or self.role == 'staff' and group in (self.task_groups or '').split(','))
 
     def set_password(self, password: str) -> None:
         if len(password) < 12 or len(password) > 128:
