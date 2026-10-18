@@ -12,7 +12,7 @@ from sqlalchemy import select
 
 from app.extensions import db
 from app.models import Product, SupportConversation
-from test_auth import csrf
+from test_auth import auth_client, csrf
 from test_backlog import as_user, order_for, people, post  # noqa: F401  (pytest fixtures)
 
 
