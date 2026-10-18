@@ -16,10 +16,12 @@ class InventoryError(Exception):
         super().__init__(message)
 
 
-def actor_for(session, actor_id):
+def actor_for(session, actor_id, permission=None):
     actor = session.get(User, actor_id)
     if not actor or not actor.is_active or actor.role not in {'admin', 'staff'}:
         raise InventoryError('Bạn không có quyền thực hiện thao tác này.', 403)
+    if permission and not actor.has_permission(permission):
+        raise InventoryError('Bạn chưa được cấp nhóm quyền này.', 403)
     return actor
 
 

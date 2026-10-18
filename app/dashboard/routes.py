@@ -27,6 +27,8 @@ def index():
 @blueprint.get("/staff/dashboard")
 @business_required
 def staff():
+    if current_user.role == 'staff' and not current_user.has_permission('inventory'):
+        return render_template('features/staff_home.html', active_page='dashboard')
     status = 200
     try:
         stats = load_dashboard(current_user.role)
